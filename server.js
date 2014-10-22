@@ -34,7 +34,10 @@ var rcoder = {
 	*/
 	getCookie: function(req, name){
 		console.log(req.headers);
-		var crumbs = req.headers['cookie'].split(';');
+		var crumbs = {};
+                if(req.headers['cookie']){
+                        crumbs = req.headers['cookie'].split(';');
+                }
 		for(var i = 0; i < crumbs.length; i++){
 			var parts = crumbs[i].split('=');
 			if(parts[0] == name){
@@ -70,13 +73,13 @@ function runFile(req, res, path, problem){
 			console.log('Error reading ' + path);
 			console.log(err);
 		}
-		try{
+	//	try{
 			vm.runInContext(data, context);
 			console.log('Success');
-		}catch(err){
+	/*	}catch(err){
 			console.log('Error running ' + path);
 			console.log(err);
-		}
+		}*/
 	});
 }
 
@@ -100,9 +103,11 @@ http.createServer(function (req, res){
 			var isDirectory = fs.statSync('./public' + urlo.pathname).isDirectory();
 			//console.log('idDirectory: ' + isDirectory);
 			if(isDirectory){//If the url given is a directory, use index.js as default.
-				runFile(req, res, urlo.pathname + '/index.js');
-			}else if(/.*\.js/.test(urlo.pathname)){//if it is a javascript file, run it
-				runFile(req, res, urlo.pathname);
+				runFile(req, res, urlo.pathname + '/index.rhp');
+                        }else if(/.*\.rhp/.test(urlo.pathname)){//if it is an rhp file, run it server-side
+                                runFile(req, res, urlo.pathname);
+			}else if(/.*\.js/.test(urlo.pathname)){//if it is a javascript file, send it
+				returnFile(req, res, urlo.pathname, 'application/javascript');
 			}else if(/.*\.css/.test(urlo.pathname)){//if it is a css file, send it
 				returnFile(req, res, urlo.pathname, 'text/css');
 			}else if(/.*\.html/.test(urlo.pathname)){//if it is an html file, send it
@@ -122,7 +127,7 @@ http.createServer(function (req, res){
 			runFile(req, res, '/error/not-found.js', true);//file is not on server. Gives 404 page.
 		}
 	});
-}).listen(80, '192.168.1.169', function(err){
+}).listen(80, '127.0.0.1', function(err){
 	if(err) return cb(err);
 	
 	//sets uid to the id of the user who used sudo
